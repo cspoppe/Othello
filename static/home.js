@@ -152,10 +152,6 @@ const messageWindow = {
                                     ----- Websockets -----
 **************************************************************************************************/
 
-// socket = io(location.host);
-
-socket = io();
-
 socket.on('connect', () => {
     socket.emit('home', {});
     console.log(`document.domain: ${document.domain}`);
@@ -392,6 +388,7 @@ socket.on('opp_disconnect', (data) => {
 
 window.addEventListener('DOMContentLoaded', () => {
     // send message to server requesting info on which friends are currently online
+    socket = io('https://' + document.domain + ':' + location.port);
     socket.emit('get_online_friends', {});
 })
 
