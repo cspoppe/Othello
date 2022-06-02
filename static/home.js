@@ -152,7 +152,7 @@ const messageWindow = {
                                     ----- Websockets -----
 **************************************************************************************************/
 
-socket = io('wss://' + location.host);
+socket = io(location.host);
 
 socket.on('connect', () => {
     socket.emit('home', {});
