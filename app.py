@@ -103,7 +103,6 @@ def create_app():
             username = session.get('username')
             print(f'{username} has logged out')
             app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
-            notify_friends('offline')
             session.clear()
             # flash('You have been logged out', 'success')
         return redirect(url_for('home'))
