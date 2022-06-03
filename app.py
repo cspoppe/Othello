@@ -107,7 +107,7 @@ def create_app():
         return redirect(url_for('home'))
 
     @socketio.on('home')
-    def home(data):
+    def home():
         
         username = session.get('username')
         if (username):
@@ -191,6 +191,7 @@ def create_app():
         username = session.get('username')
         if (data['game_mode'] == 'vs'):
             opponent = data['invitee']
+            print(f'{username} joined game with {opponent}')
             # get room and color from the database entry
             user = app.db.players.find_one({'username': username})
             game_info = user['accepted_invitations'][opponent]
@@ -419,6 +420,7 @@ def create_app():
         opp_sid = opp['sid']
         if (accepted):
             # create room
+            print(f'{username} accepted invitation from {opponent}')
             room = opponent + '_' + username
             session['playerID'] = 'invitee'
             session['opponent'] = opponent
@@ -527,4 +529,3 @@ def create_app():
 #     socketio.run(app)
 
 app=create_app()
-
