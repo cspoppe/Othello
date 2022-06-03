@@ -139,6 +139,7 @@ def create_app():
         username = session.get('username')
 
         if username:
+            print(f'{username} notifying friends that they are {status}')
             user = app.db.players.find_one({'username': username})
             sent = user['sent_invitations']
             received = user['received_invitations']
