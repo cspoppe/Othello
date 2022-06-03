@@ -104,7 +104,6 @@ def create_app():
             print(f'{username} has logged out')
             app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
             # notify_friends_offline()
-            socketio.disconnect()
             session.clear()
             # flash('You have been logged out', 'success')
         return redirect(url_for('home'))
