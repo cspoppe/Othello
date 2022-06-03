@@ -155,7 +155,7 @@ const messageWindow = {
 socket = io('https://' + location.host);
 
 socket.on('connect', () => {
-    socket.emit('home', {});
+    socket.emit('home');
     console.log(`document.domain: ${document.domain}`);
     console.log(`location.host: ${location.host}`);
 });
