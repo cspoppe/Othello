@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-socketio = SocketIO()
+socketio = SocketIO(ping_interval=3)
 
 # def login_required(route):
 #     @functools.wraps(route)
@@ -103,6 +103,7 @@ def create_app():
             username = session.get('username')
             print(f'{username} has logged out')
             app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
+            notify_friends_offline()
             session.clear()
             # flash('You have been logged out', 'success')
         return redirect(url_for('home'))
@@ -132,6 +133,26 @@ def create_app():
             emit('record_update', {'record': user['record'], 'game': user['game_log'][0]})
         else:
             print('game log already up to date')
+
+    def notify_friends_offline():
+        username = session.get('username')
+        status = 'offline'
+
+        if username:
+            print(f'{username} notifying friends that they are offline')
+            user = app.db.players.find_one({'username': username})
+            sent = user['sent_invitations']
+            received = user['received_invitations']
+            invitations = sent + received
+            for friend in invitations:
+                # retrive sid for each invite, if they are online
+                friend_sid = get_user_sid(friend)
+                if friend_sid:
+                    socketio.emit('friend_online_status', {'friend': username, 'status': status}, to=friend_sid)
+
+            # accepted_invitations = user['accepted_invitations']
+            # for friend in accepted_invitations:
+            #     cancel_game({'invitee': friend, 'code': status})
 
     def notify_friends(status):
         # send messages to everyone you have sent an invite to to let them know you are now online (or offline)
