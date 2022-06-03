@@ -148,7 +148,7 @@ def create_app():
                 # retrive sid for each invite, if they are online
                 friend_sid = get_user_sid(friend)
                 if friend_sid:
-                    socket.emit('friend_online_status', {'friend': username, 'status': status}, to=friend_sid)
+                    emit('friend_online_status', {'friend': username, 'status': status}, to=friend_sid)
 
             if (status == 'unavailable' or status == 'offline'):
                 accepted_invitations = user['accepted_invitations']
