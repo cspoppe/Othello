@@ -6,6 +6,7 @@ from flask_socketio import SocketIO, join_room, leave_room, emit
 import os
 from passlib.hash import pbkdf2_sha256
 from pymongo import MongoClient
+import pytz
 from random import choice
 from dotenv import load_dotenv
 
@@ -271,6 +272,10 @@ def create_app():
             # print(sid)
             emit('rematch_status', {'sender': player, 'rematch': rematch_status}, to=room)
 
+    @socketio.on('trigger_start_game')
+    def trigger_start_game():
+        emit('start_game')
+
     @socketio.on('disconnect')
     def disconnect():
         username = session.get('username')
@@ -326,7 +331,7 @@ def create_app():
     def update_game_log(game_outcome, my_score = '--', opp_score = '--'):
         username = session.get('username')
         opponent = session.get('opponent')
-        date_time = datetime.today()
+        date_time = datetime.now(pytz.timezone('US/Pacific'))
         date = date_time.strftime('%m/%d/%Y')
         time = date_time.strftime('%I:%M:%S %p')
 
@@ -547,14 +552,6 @@ def create_app():
     @socketio.on('computer_move')
     def computer_move():
         emit('computer_move')
-
-    # @socketio.on('leave', namespace="/game")
-    # def leave():
-    #     room = session.get('room')
-    #     print(f'leaving room {room}')
-    #     session.pop('room', None)
-    #     leave_room(room)
-
 
     socketio.init_app(app)
     return app
