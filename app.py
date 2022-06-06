@@ -103,7 +103,7 @@ def create_app():
             username = session.get('username')
             print(f'{username} has logged out')
             app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
-            # notify_friends_offline()
+            notify_friends_offline()
             session.clear()
             # flash('You have been logged out', 'success')
         return redirect(url_for('home'))
@@ -115,6 +115,7 @@ def create_app():
         if (username):
             # retrieve the user's sid for the current session and store it in database
             sid = request.sid
+            session['sid'] = sid
             username = session.get('username')
             app.db.players.update_one({'username': username}, { '$set': {'sid': sid} })
             notify_friends('online')
@@ -274,26 +275,26 @@ def create_app():
     def disconnect():
         username = session.get('username')
         opp_sid = session.get('opp_sid')
-        notify_friends('offline')
-        print(f'{username} disconnected.')
 
-        # update database so sid is no longer listed
-        # this serves as a way of keeping track of who is online
-        app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
+        # Disconnect event takes >30 seconds to fire, in which time the user may have logged back in
+        # We check first if this user has logged back in before notifying friends he is offline
+        # This is to prevent situation where friends have been told this user is offline when he is
+        # still online.
 
-        # # check for any accepted invitations (people who are waiting for you to join the game)
-        # user = app.db.players.find_one({'username': username})
-        # accepted_invitations = user['accepted_invitations']
-        # for friend in accepted_invitations:
-        #     # send message to this friend that you have disconnected
-        #     friend_sid = get_user_sid(friend)
-        #     emit('opp_disconnect', {'code': 'disconnect', 'opponent': username}, to=friend_sid)
+        # retrieve sid currently stored in database and compare it to the sid stored in the session
+        # if they are different, that means the user has logged in again since the disconect event fired,
+        # in which case we do not want to proceed with any disconnect bookkeeping
+        sid = get_user_sid(username)
+        if sid != session.get('sid'):
+            notify_friends('offline')
+            print(f'{username} disconnected.')
 
-        #     #remove this invitation from the accepted invitations
-        #     app.db.players.update_one({'username': username}, { '$unset': {f'accepted_invitations.{friend}': 1 } })
+            # update database so sid is no longer listed
+            # this serves as a way of keeping track of who is online
+            app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
 
-        if opp_sid:
-            emit('opp_disconnect', {'code': 'offline', 'opponent': username}, to=opp_sid)
+            if opp_sid:
+                emit('opp_disconnect', {'code': 'offline', 'opponent': username}, to=opp_sid)
 
     def get_user_sid(username):
         user = app.db.players.find_one({'username': username})
