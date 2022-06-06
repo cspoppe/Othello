@@ -1150,6 +1150,7 @@ function resetGame() {
     messageWindow.remove();
     rematch = null;
     opp_rematch = null;
+    clearBoard();
     initBoard();
 }
 
