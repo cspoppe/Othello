@@ -286,7 +286,10 @@ def create_app():
         # in which case we do not want to proceed with any disconnect bookkeeping
         if username:
             sid = get_user_sid(username)
-            if sid == session.get('sid'):
+            session_sid = session.get('sid')
+            print(f'SID from database: {sid}')
+            print(f'SID from session: {session_sid}')
+            if sid == session_sid:
                 print(f'SID for {username} in database matches SID stored in session')
                 notify_friends('offline')
                 print(f'{username} disconnected.')
