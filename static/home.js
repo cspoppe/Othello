@@ -122,8 +122,8 @@ const messageWindow = {
             buttons = [btn];
         }
         const messageTemplate = this.getHtmlTemplate(message, animate_flag, buttons);
-        const board = document.querySelector('.gameBoard');
-        board.insertAdjacentHTML('afterend', messageTemplate);
+        const board = document.querySelector('.game');
+        board.insertAdjacentHTML('beforeend', messageTemplate);
 
         if (buttons != 'none') {
             for (const button of buttons) {
@@ -152,12 +152,12 @@ const messageWindow = {
                                     ----- Websockets -----
 **************************************************************************************************/
 
-socket = io('https://' + location.host);
+// socket = io(location.protocol + '//' + location.host + ':' + location.port);
+socket = io(location.protocol + '//' + location.host)
 
 socket.on('connect', () => {
+    console.log('Socket connected.');
     socket.emit('home');
-    console.log(`document.domain: ${document.domain}`);
-    console.log(`location.host: ${location.host}`);
 });
 
 socket.on('online_friends', (data) => {
@@ -274,6 +274,7 @@ socket.on('start_game', () => {
     console.log('Socket: start game');
     messageWindow.remove();
     (opponent == 'Computer') ? updateNumHints(Infinity) : updateNumHints(3);
+    clearBoard();
     initBoard();
     setInputs(true);
     if (turn == myColor) {
@@ -1148,10 +1149,12 @@ function displayGameOver(game_result) {
 function resetGame() {
     // remove the message window
     messageWindow.remove();
+    refreshDisplay();
     rematch = null;
     opp_rematch = null;
-    clearBoard();
-    initBoard();
+    // clearBoard();
+    // initBoard();
+    socket.emit('trigger_start_game');
 }
 
 function removeRotateClass() {
