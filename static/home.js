@@ -274,7 +274,6 @@ socket.on('start_game', () => {
     console.log('Socket: start game');
     messageWindow.remove();
     (opponent == 'Computer') ? updateNumHints(Infinity) : updateNumHints(3);
-    clearBoard();
     initBoard();
     setInputs(true);
     if (turn == myColor) {
@@ -582,8 +581,8 @@ function updateNumHints(num) {
     }
 }
 
-function refreshDisplay() {
-    clearBoard();
+function refreshDisplay(clearScoreBoard = true) {
+    clearBoard(clearScoreBoard);
     setInputs(false);
 
     // grab the date and time of latest game in the game log and send it back to the server
@@ -756,10 +755,10 @@ function removeAllAcceptedInvites() {
     });
 }
 
-function clearBoard() {
+function clearBoard(clearScoreBoard = true) {
     removePieces();
     clearAllLegalMoves();
-    clearScoreboard();
+    if (clearScoreBoard) clearScoreboard();
     disableHints(true);
 }
 
@@ -1149,7 +1148,7 @@ function displayGameOver(game_result) {
 function resetGame() {
     // remove the message window
     messageWindow.remove();
-    refreshDisplay();
+    refreshDisplay(false);
     rematch = null;
     opp_rematch = null;
     // clearBoard();
