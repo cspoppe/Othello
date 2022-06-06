@@ -289,8 +289,11 @@ def create_app():
             session_sid = session.get('sid')
             print(f'SID from database: {sid}')
             print(f'SID from session: {session_sid}')
-            if sid == session_sid:
-                print(f'SID for {username} in database matches SID stored in session')
+            if not sid or sid == session_sid:
+                if sid == session_sid:
+                    print(f'SID for {username} in database matches SID stored in session')
+                if not sid:
+                    print(f'SID in database is empty')
                 notify_friends('offline')
                 print(f'{username} disconnected.')
 
