@@ -284,17 +284,22 @@ def create_app():
         # retrieve sid currently stored in database and compare it to the sid stored in the session
         # if they are different, that means the user has logged in again since the disconect event fired,
         # in which case we do not want to proceed with any disconnect bookkeeping
-        sid = get_user_sid(username)
-        if sid != session.get('sid'):
-            notify_friends('offline')
-            print(f'{username} disconnected.')
+        if username:
+            sid = get_user_sid(username)
+            if sid == session.get('sid'):
+                print(f'SID for {username} in database matches SID stored in session')
+                notify_friends('offline')
+                print(f'{username} disconnected.')
 
-            # update database so sid is no longer listed
-            # this serves as a way of keeping track of who is online
-            app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
+                # update database so sid is no longer listed
+                # this serves as a way of keeping track of who is online
+                app.db.players.update_one({'username': username}, { '$set': {'sid': ''} })
 
-            if opp_sid:
-                emit('opp_disconnect', {'code': 'offline', 'opponent': username}, to=opp_sid)
+                if opp_sid:
+                    emit('opp_disconnect', {'code': 'offline', 'opponent': username}, to=opp_sid)
+
+            else:
+                print(f'{username} has logged back in after disconnecting')
 
     def get_user_sid(username):
         user = app.db.players.find_one({'username': username})
