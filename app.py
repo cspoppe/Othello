@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-socketio = SocketIO()
+socketio = SocketIO(ping_interval=3)
 
 # def login_required(route):
 #     @functools.wraps(route)
