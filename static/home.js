@@ -1214,6 +1214,8 @@ function updateRematchStatus(oppStatus) {
     if (!oppStatus) {
         messageWindow.remove();
         const msg = 'Your opponent declined a rematch.';
+        // tell server to clear your opponent's name and sid from your session
+        socket.emit('clear_opp_data');
         messageWindow.showMessage(msg, false, 'refresh');
     } else {
         // if I have already also said yes to a rematch, reset them
@@ -1232,9 +1234,7 @@ function updateRematchStatus(oppStatus) {
 
 gameBoard.addEventListener('transitionend', (event) => {
     const target = event.target;
-    if (target.classList.contains('rotate')) {
-        target.classList.remove('rotate');
-    }
+    target.classList.remove('rotate');
 })
 
 // gameBoard.addEventListener('transitionstart', (event) => {
