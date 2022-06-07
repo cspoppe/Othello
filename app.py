@@ -253,6 +253,11 @@ def create_app():
     def available():
         notify_friends('available')
 
+    @socketio.on('clear_opp_data')
+    def clear_opp_data():
+        session.pop('opponent')
+        session.pop('opp_sid')
+
     @socketio.on('rematch')
     def rematch(data):
         opponent = session.get('opponent')
@@ -267,6 +272,8 @@ def create_app():
                 # available again
                 notify_friends('available')
                 leave_room(room)
+                session.pop('opp_sid')
+                session.pop('opponent')
             # opp = app.db.players.find_one({'username': opponent})
             # sid = opp['sid']
             # print(sid)
