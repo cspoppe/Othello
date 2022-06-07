@@ -1113,7 +1113,7 @@ function displayGameOver(game_result) {
             } else {
                 // opponent has not yet decided if they want a rematch, so we need to wait for their decision.
                 const msg = `Waiting for ${opponent}...`;
-                messageWindow.showMessage(msg, false, 'none');
+                messageWindow.showMessage(msg, true, 'none');
             }
             // Either way, we send a message back to the server indicating we want a rematch
             socket.emit('rematch', { player: username, rematch: true });
