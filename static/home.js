@@ -1214,8 +1214,7 @@ function updateRematchStatus(oppStatus) {
     if (!oppStatus) {
         messageWindow.remove();
         const msg = 'Your opponent declined a rematch.';
-        messageWindow.showMessage(msg, 'refresh');
-        clearBoard();
+        messageWindow.showMessage(msg, false, 'refresh');
     } else {
         // if I have already also said yes to a rematch, reset them
         if (rematch) {
