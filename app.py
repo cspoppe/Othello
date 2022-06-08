@@ -415,7 +415,7 @@ def create_app():
         if (not opponent): # check if this user exists
             msg = 'This user does not exist'
         elif (inviter in opponent['received_invitations']):
-            msg = 'You have already sent an invitation to this user'
+            msg = 'You already sent an invitation to this user'
             invite_status = 'info'
         elif (invitee in user['received_invitations']):
             msg = 'This user has already sent you an invitation'
