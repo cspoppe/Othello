@@ -25,7 +25,9 @@ ul {
 
 li {
     margin-bottom: 0.3rem;
-    display: flex;
+    /* display: flex; */
+    display: grid;
+    grid-template-columns: 1fr max-content;
     justify-content: space-between;
     align-items: center;
 }
@@ -83,14 +85,16 @@ form {
 
 .main-container {
     display: grid;
-    grid-template-columns: minmax(max-content, 1fr) 1fr auto;
+    /* grid-template-columns: minmax(max-content, 1fr) 1fr auto; */
+    grid-template-columns: 1fr 1fr auto;
     grid-template-rows: repeat(2, auto) 1fr;
     column-gap: 2rem;
     grid-template-areas:
         "game header social"
         "game play social"
         "game gamelog social";
-    margin-left: 3rem;
+    margin-left: 2rem;
+    justify-items: center;
     /* padding: 0 1rem; */
 }
 
@@ -120,6 +124,7 @@ h3.invitations-header {
     /* min-width: 642px; */
     /* width: min-content; */
     grid-area: game;
+    width: 40rem;
     /* display: grid; */
     /* grid-template-rows: repeat(3, max-content); */
     padding-top: var(--top-padding);
@@ -128,14 +133,17 @@ h3.invitations-header {
 
 .game {
     display: grid;
-    /* max-width: 522px; */
-    grid-template-columns: auto;
+    grid-template-columns: 1fr;
     grid-template-rows: auto;
     justify-content: center;
-    /* margin: 0 auto; */
-    margin-top: 10px;
     grid-template-rows: repeat(3, max-content);
 }
+
+/* .game {
+    margin: 0 auto;
+    min-width: 30rem;
+    max-width: 40rem;
+} */
 
 
 .gameControl {
@@ -144,6 +152,7 @@ h3.invitations-header {
     display: grid;
     /* justify-content: space-between; */
     grid-template-columns: repeat(3, 1fr);
+    width: 100%;
     justify-items: center;
     align-items: center;
     font-weight: 400;
@@ -151,7 +160,7 @@ h3.invitations-header {
 
 .playersSection {
     display: grid;
-    grid-template-columns: 30% 20% 30%;
+    grid-template-columns: 35% 20% 35%;
     margin-top: 2rem;
     justify-content: center;
 }
@@ -161,10 +170,10 @@ h3.invitations-header {
     background-color: rgb(70, 61, 61);
     /* background-color: #08090A; */
     display: grid;
-    justify-content: center;
+    /* justify-content: center; */
     font-size: 2rem;
     border-radius: 10px;
-    padding: 0.5rem 0;
+    padding: 0.5rem;
 }
 
 .scoreDiv {
@@ -175,8 +184,10 @@ h3.invitations-header {
 
 .opponentName,
 .playerName {
-    display: flex;
-    justify-content: center;
+    display: inline-block;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .Vs {
@@ -187,22 +198,42 @@ h3.invitations-header {
     font-size: 1.5rem;
 }
 
-.gameBoard {
+.gameBoard-container {
+    max-width: 50rem;
+    aspect-ratio: 1 / 1;
     grid-row: 1;
     grid-column: 1;
 }
 
+/* .gameBoard {
+    grid-row: 1;
+    grid-column: 1;
+} */
+
+.gameBoard {
+    width: 100%;
+    height: 100%;
+}
+
+.gameBoard tr {
+    width: 100%;
+}
+
 .square {
-    width: 80px;
-    height: 80px;
+    /* width: 80px;
+    height: 80px; */
+    width: 12.5%;
+    height: 12.5%;
     background-color: #4C956C;
     border: solid 2px black;
     box-sizing: border-box;
 }
 
 .gamePiece {
-    height: 65px;
-    width: 65px;
+    /* height: 65px;
+    width: 65px; */
+    width: 81%;
+    height: 81%;
     border-radius: 50%;
     border: solid 1px black;
     margin: auto auto;
@@ -795,6 +826,11 @@ body.disableCursor {
     flex-direction: column;
     align-items: flex-start;
     height: 11rem;
+}
+
+li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* .sendInvitation * {
