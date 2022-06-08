@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="/static/css/styles.css?v=1.0.0" />
     <link rel="stylesheet" href="/static/css/queries.css?v=1.0.0" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js" integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous"></script>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"
+        integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
+        crossorigin="anonymous"></script>
     <title>Othello</title>
     <link rel="shortcut icon" type="image/jpg" href="/static/images/othello_icon.jpg" />
 </head>
@@ -18,16 +20,18 @@
     <div class="main-container">
         <div class="game-container">
             <div class="game">
-                <table class="gameBoard">
-                    {% for i in range(8) %}
-                    <tr>
-                        {% for j in range(8) %}
-                        <td class="square" id="R{{i}}C{{j}}">
-                        </td>
+                <div class="gameBoard-container">
+                    <table class="gameBoard">
+                        {% for i in range(8) %}
+                        <tr>
+                            {% for j in range(8) %}
+                            <td class="square" id="R{{i}}C{{j}}">
+                            </td>
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </table>
+                    </table>
+                </div>
 
                 <div class="gameControl">
                     <div class="turnDisplay">
@@ -208,7 +212,7 @@
                         <div class="accept-decline-buttons">
                             <button class="button-component-v2 game-disable offline-disable disabled acceptInvite"
                                 id="{{ inviter }}" disabled>&check;</button>
-                            <button class="button-component-v2 declineInvite" id="{{ inviter }}">&cross;</button>
+                            <button class="button-component-v2 declineInvite" id="{{ inviter }}">&#10006;</button>
                         </div>
                     </li>
                     {% endfor %}
@@ -223,8 +227,9 @@
                     {% for invitee, room in accepted_invitations.items() %}
                     <li id="{{ invitee }}"><span>{{ invitee }}</span>
                         <div class="accept-decline-buttons">
-                            <button class="button-component-v2 game-disable joinGame" id="{{ invitee }}">Join</button>
-                            <button class="button-component-v2 cancelGame" id="{{ invitee }}">Cancel</button>
+                            <button class="button-component-v2 game-disable joinGame"
+                                id="{{ invitee }}">&check;</button>
+                            <button class="button-component-v2 cancelGame" id="{{ invitee }}">&#10006;</button>
                         </div>
                     </li>
                     {% endfor %}
