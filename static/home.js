@@ -207,6 +207,10 @@ function addInviteStatus(msg, status) {
             <span>${msg}</span>
             <button class="inviteStatusClose">&#10006;</button>
         </div>`;
+
+    // remove any old invite status
+    const oldStatus = document.querySelector('.inviteStatus');
+    if (oldStatus) oldStatus.remove();
     const sendInvitation = document.querySelector('.sendInvitation');
     sendInvitation.insertAdjacentHTML('beforeend', str);
     const btn = document.querySelector('.inviteStatus button');
@@ -295,7 +299,7 @@ socket.on('invitation', (data) => {
                 <div class="accept-decline-buttons">
                     <button class="button-component-v2 game-disable offline-disable acceptInvite"
                         id="${inviter}">&check;</button>
-                    <button class="button-component-v2 declineInvite" id="${inviter}">&cross;</button>
+                    <button class="button-component-v2 declineInvite" id="${inviter}">&#10006;</button>
                 </div>
             </li>`;
 
@@ -309,8 +313,8 @@ socket.on('invite_accepted', (data) => {
             <li id="${invitee}"><span>${invitee}</span>
                 <div class="accept-decline-buttons">
                     <button class="button-component-v2 game-disable joinGame"
-                        id="${invitee}">Join</button>
-                    <button class="button-component-v2 cancelGame" id="${invitee}">Cancel</button>
+                        id="${invitee}">&check;</button>
+                    <button class="button-component-v2 cancelGame" id="${invitee}">&#10006;</button>
                 </div>
             </li>`;
 
@@ -318,7 +322,7 @@ socket.on('invite_accepted', (data) => {
     game.remove();
 
     const acceptedInvitations = document.querySelector('.acceptedInvitations > ul');
-    acceptedInvitations.insertAdjacentHTML('afterend', str);
+    acceptedInvitations.insertAdjacentHTML('beforeend', str);
 
     console.log(`Invite accepted by ${invitee}`);
     document.querySelector(`.cancelGame#${invitee}`).addEventListener('click', (e) => {
