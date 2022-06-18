@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/home.css?v=1.0.0" />
     <link rel="stylesheet" href="/static/css/styles.css?v=1.0.0" />
     <link rel="stylesheet" href="/static/css/queries.css?v=1.0.0" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
@@ -176,73 +175,81 @@
         </div>
         {% endif %}
 
-        <div class="social-container">
-            <h3 class="invitations-header">Online Play</h3>
-            {% if username %}
-            <div class="logInOut">
-                <a href="/logout"><span class="logInOutText">logout</span></a>
-            </div>
-            <div class="sendInvitation">
-                <h4 class="sendInviteHeader">Send Invitation</h4>
-                <input type="text" class="vs-game-disable" id="userInvite" name="userInvite" placeholder="username">
-                <button class="button-component vs-game-disable btnSendInvite">Send</button>
-            </div>
+        <div class="side-ribbon">
+            <div class="social-container">
+                <h3 class="invitations-header">Online Play</h3>
+                {% if username %}
+                <div class="logInOut">
+                    <a href="/logout"><span class="logInOutText">logout</span></a>
+                </div>
+                <div class="sendInvitation">
+                    <h4 class="sendInviteHeader">Send Invitation</h4>
+                    <input type="text" class="vs-game-disable" id="userInvite" name="userInvite" placeholder="username">
+                    <button class="button-component vs-game-disable btnSendInvite">Send</button>
+                </div>
 
-            <div class="sentInvitations">
-                <h4>Sent</h4>
-                <ul>
-                    {% if sent_invitations %}
-                    {% for invitee in sent_invitations %}
-                    <li id="{{ invitee }}"><span>{{ invitee }}</span>
-                        <div class="accept-decline-buttons">
-                            <button class="button-component-v2 cancelInvite" id="{{ invitee }}">Cancel</button>
-                        </div>
-                    </li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
-            </div>
+                <div class="sentInvitations">
+                    <h4>Sent</h4>
+                    <ul>
+                        {% if sent_invitations %}
+                        {% for invitee in sent_invitations %}
+                        <li id="{{ invitee }}"><span>{{ invitee }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 cancelInvite" id="{{ invitee }}">Cancel</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
 
-            <div class="receivedInvitations">
-                <h4>Received</h4>
-                <ul>
-                    {% if received_invitations %}
-                    {% for inviter in received_invitations %}
-                    <li id="{{ inviter }}"><span>{{ inviter }}</span>
-                        <div class="accept-decline-buttons">
-                            <button class="button-component-v2 game-disable offline-disable disabled acceptInvite"
-                                id="{{ inviter }}" disabled>&check;</button>
-                            <button class="button-component-v2 declineInvite" id="{{ inviter }}">&#10006;</button>
-                        </div>
-                    </li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
-            </div>
+                <div class="receivedInvitations">
+                    <h4>Received</h4>
+                    <ul>
+                        {% if received_invitations %}
+                        {% for inviter in received_invitations %}
+                        <li id="{{ inviter }}"><span>{{ inviter }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 game-disable offline-disable disabled acceptInvite"
+                                    id="{{ inviter }}" disabled>&check;</button>
+                                <button class="button-component-v2 declineInvite" id="{{ inviter }}">&#10006;</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
 
-            <div class="acceptedInvitations">
-                <h4>Accepted</h4>
-                <ul>
-                    {% if accepted_invitations %}
-                    {% for invitee, room in accepted_invitations.items() %}
-                    <li id="{{ invitee }}"><span>{{ invitee }}</span>
-                        <div class="accept-decline-buttons">
-                            <button class="button-component-v2 game-disable joinGame"
-                                id="{{ invitee }}">&check;</button>
-                            <button class="button-component-v2 cancelGame" id="{{ invitee }}">&#10006;</button>
-                        </div>
-                    </li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
+                <div class="acceptedInvitations">
+                    <h4>Accepted</h4>
+                    <ul>
+                        {% if accepted_invitations %}
+                        {% for invitee, room in accepted_invitations.items() %}
+                        <li id="{{ invitee }}"><span>{{ invitee }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 game-disable joinGame"
+                                    id="{{ invitee }}">&check;</button>
+                                <button class="button-component-v2 cancelGame" id="{{ invitee }}">&#10006;</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% else %}
+                <div class="logInOut">
+                    <a class="" href="/login"><span class="logInOutText">login</span></a>
+                    <span class="">&bull;</span>
+                    <a class="" href="/register"><span class="logInOutText">register</span></a>
+                </div>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="logInOut">
-                <a class="" href="/login"><span class="logInOutText">login</span></a>
-                <span class="">&bull;</span>
-                <a class="" href="/register"><span class="logInOutText">register</span></a>
+            <div class="links">
+                <h4>Links</h4>
+                <a href="https://github.com/cspoppe/Othello">Code - Github</a>
+                <a href="https://www.cspoppeprofile.com/">Sudoku by Craig</a>
+                <a href="https://www.linkedin.com/in/craig-poppe-030b4616/">LinkedIn Profile</a>
             </div>
-            {% endif %}
         </div>
 
     </div>

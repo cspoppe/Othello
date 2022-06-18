@@ -138,20 +138,16 @@ function getScore(board) {
     return [white, black];
 }
 
+// Function will use minimax algorithm to find the best move after looking n moves ahead
+// This algorithm is 'dumb' in that it only evaluates the state of the board by which player
+// has more pieces on the board, it does not consider which player has his pieces in a more
+// advantageous position/grouping
 function alphabeta(depth, turn, board) {
 
     var player = turn;
     function helper(board, depth, a, b, turn, maximizingPlayer) {
         // get a list of all the legal moves available
         var moves = returnAllLegalMoves(board, turn);
-
-        // console.log('Board state:');
-        // console.log(board);
-
-        // console.log(`legal moves (${moves.length}):`);
-        // for (let move of moves) {
-        //     console.log(move);
-        // }
 
         // first check for end condition
         if (moves.length === 0 || depth === 0) {
@@ -165,9 +161,6 @@ function alphabeta(depth, turn, board) {
                 score_diff = Infinity * score_diff / Math.abs(score_diff);
             }
 
-            // var corners = countCorners(board); // returns nWhiteCorners - nBlackCorners
-            // if (player === 'black') corners = -corners;
-            // score_diff += 2 * corners;
             return [0, score_diff];
         }
 

@@ -1,63 +1,63 @@
+
+/* ----------- online play elements -----------*/
 const btnSendInvite = document.querySelector('.btnSendInvite');
-const inviteStatus = document.querySelector('.inviteStatus');
 const userInviteTextField = document.querySelector('#userInvite');
-const btnPlayComputer = document.querySelector('.btnPlayComputer');
 
 // game elements
-const volumeSlider = document.querySelector('.volumeSlider');
-const volumeSymbol = document.querySelector('#volumeSymbol');
 const helpModeSwitch = document.querySelector('.helpModeSwitch');
-var turnMsg = document.querySelector('.turnMsg');
 var checkbox = document.querySelector('#helpModeCheckbox');
 const btnHint = document.querySelector('.btnHint');
 const nHintsContainer = document.querySelector('.nHints-container');
 const nHintsSpan = document.querySelector('.nHints');
 const btnTest = document.querySelector('.btnTest');
 const difficultySlider = document.querySelector('.difficultySlider');
+const btnPlayComputer = document.querySelector('.btnPlayComputer');
 const gameBoard = document.querySelector('.gameBoard');
 var turnIndicator = document.querySelector('.turnIndicator');
 const body = document.querySelector('body');
 const squares = document.querySelectorAll('.square');
 
+// import functions for AI
+// minimax algorithm with alpha-beta pruning
 import * as ab from './abFuncs.js';
 
+// initialize page with hint switch disabled
 disableHints(true);
 helpModeSwitch.disabled = true;
 
-var socket, w;
-var myColor = null;
-var username, opponent;
-var rematch = null;
-var opp_rematch = null;
+var socket; // for websockets
+var w; // used for Web Worker to run AI calculation in background
+var myColor = null; // keeps track of which color the user has been assigned
+var username, opponent; // variables to store name of user and opponent
+var rematch = null; // stores whether user agreed to rematch
+var opp_rematch = null; // stores whether opponent agreed to rematch
 var playerScore, oppScore;
-var nHints;
-var nMovesAhead = difficultySlider.value;
-var autoplay = false;
+var nHints; // keeps track of number of hints left (3 allowed in vs mode, unlimited against computer)
+var nMovesAhead = difficultySlider.value; // 
+var helpMode = false; // state of help mode (shows which moves are available)
+var turn = 'black'; // keeps track of whose turn it is
+var inputActive = true; // inputs are deactivated when it's not your turn
+var gameOver = false; // game over flag
+var gameActive = false; // indicates if a game is active or not
+var quickGame = false; // flag used to set up an easy-to-win game for debugging purposes
 
-var helpMode = false;
-
-var volume = 0.5;
-var lastVolume = 0.5;
-// ping.volume = volume;
-// ping2.volume = volume;
-
-var turn = 'black';
-var turnTemp = 'black';
-var inputActive = true;
-var gameOver = false;
-var gameActive = false;
-var whiteRemainingPieces = 32;
-var blackRemainingPieces = 32;
-var whiteScore = 0;
-var blackScore = 0;
-
-var quickGame = false;
-
+// initialize matrix representing state of game board
 var gameValues = new Array(8);
 for (let i = 0; i < gameValues.length; i++) {
     gameValues[i] = new Array(8);
 }
 
+
+/*
+var volume = 0.5;
+var lastVolume = 0.5;
+ping.volume = volume;
+ping2.volume = volume;
+*/
+
+
+// messageWindow object is used for displaying custom messages to the user
+// Options to include buttons along with functions to be called when buttons are pressed
 const messageWindow = {
     getHtmlTemplate(message, animate_flag, buttons) {
         var str = `
@@ -65,6 +65,7 @@ const messageWindow = {
             <div class="message__content">${message}</div>
             `;
 
+        // include animation of three pieces flipping in order
         if (animate_flag) {
             str += `
             <div>
@@ -75,6 +76,7 @@ const messageWindow = {
                 `;
         }
 
+        // include any buttons passed through
         if (buttons != 'none') {
             for (const button of buttons) {
                 str += `
@@ -96,10 +98,14 @@ const messageWindow = {
                 func: function () {
                     console.log('Message window closed.');
                     document.querySelector('.message__window').remove();
+                    document.querySelector('.gameBoard').style.opacity = 1;
                 }
             };
 
             buttons = [btn];
+            // 'refresh' button is included when a game is over.
+            // If the user declines a rematch, we need to reset the page back to initial state
+            // Also update record and gamelog, and notify friends you are available for game
         } else if (buttons == 'refresh') {
             const btn = {
                 class: 'message__close',
@@ -107,14 +113,13 @@ const messageWindow = {
                 func: function () {
                     console.log('Message window closed.');
                     document.querySelector('.message__window').remove();
-                    // location.reload();
+                    document.querySelector('.gameBoard').style.opacity = 1;
 
                     /*
                     if you weren't playing a game against the computer, send out message to invitees
                     that you are now available
                     */
                     if (opponent != 'Computer') socket.emit('available');
-                    // add function to refresh the display without actually refreshing the connection
                     refreshDisplay();
                 }
             };
@@ -125,18 +130,25 @@ const messageWindow = {
         const board = document.querySelector('.game');
         board.insertAdjacentHTML('beforeend', messageTemplate);
 
+        // attach event listeners to the buttons
         if (buttons != 'none') {
             for (const button of buttons) {
                 document.querySelector(`.${button['class']}`).addEventListener('click', button['func']);
             }
         }
 
+        // if this parameter is passed in, the message should expire after given amount of time
+        // Used when indicating that there is no move available for player and turn is reverting
+        // back to the other player
         if (expire_time) {
             // set window to expire after given amount of time.
             setTimeout(() => {
                 document.querySelector('.message__window').remove();
             }, expire_time);
         }
+
+        // dim the board when message is displayed so that the message stands out more
+        document.querySelector('.gameBoard').style.opacity = 0.4;
     },
 
     remove() {
@@ -145,6 +157,9 @@ const messageWindow = {
         // without having to know if a message is showing.
         const window = document.querySelector('.message__window');
         if (window) window.remove();
+
+        // set opacity of board back to normal
+        document.querySelector('.gameBoard').style.opacity = 1;
     }
 };
 
@@ -152,7 +167,6 @@ const messageWindow = {
                                     ----- Websockets -----
 **************************************************************************************************/
 
-// socket = io(location.protocol + '//' + location.host + ':' + location.port);
 socket = io(location.protocol + '//' + location.host)
 
 socket.on('connect', () => {
@@ -160,6 +174,7 @@ socket.on('connect', () => {
     socket.emit('home');
 });
 
+// message from server indicating which friends are currently online
 socket.on('online_friends', (data) => {
     const received_online = data.received_online;
     for (let friend of received_online) {
@@ -178,22 +193,27 @@ socket.on('online_friends', (data) => {
     setInviteButtons();
 })
 
+// Message contains updated record and latest game result
 socket.on('record_update', (data) => {
     updateRecord(data.record);
     updateGameLog(data.game);
 })
 
-// "friend" (someone who has sent me an invitation) has come online
-// enable button to accept invitation to game
+// friend's online status has changed (logged on or off, or available/unavailable)
 socket.on('friend_online_status', (data) => {
     setInviteButtons(data.friend, data.status);
 })
 
+// Someone canceled an invitation they sent
+// Remove invitation from our 'received invitations' list
 socket.on('invitation_canceled', (data) => {
     const game = document.querySelector(`.receivedInvitations li#${data.inviter}`);
     game.remove();
 })
 
+// Message sent back from server after we sent an invitation, letting us know 
+// if the invitation was sent successfully. If not, includes error message
+// E.g., user does not exist, you already sent an invitation to this user, etc.
 socket.on('invite_status', (data) => {
     addInviteStatus(data.msg, data.invite_status);
     if (data.invite_status == 'success') {
@@ -201,24 +221,7 @@ socket.on('invite_status', (data) => {
     }
 })
 
-function addInviteStatus(msg, status) {
-    var str = `
-        <div class="inviteStatus ${status}">
-            <span>${msg}</span>
-            <button class="inviteStatusClose">&#10006;</button>
-        </div>`;
-
-    // remove any old invite status
-    const oldStatus = document.querySelector('.inviteStatus');
-    if (oldStatus) oldStatus.remove();
-    const sendInvitation = document.querySelector('.sendInvitation');
-    sendInvitation.insertAdjacentHTML('beforeend', str);
-    const btn = document.querySelector('.inviteStatus button');
-    btn.addEventListener('click', () => {
-        document.querySelector('.inviteStatus').remove();
-    })
-}
-
+// Message from server to trigger computer's move
 socket.on('computer_move', () => {
     const msg = 'Computer is thinking...';
     const animateFlag = true;
@@ -226,6 +229,9 @@ socket.on('computer_move', () => {
     setTimeout(computerMove, 250 + Math.random() * 500);
 })
 
+// sent when you join a game
+// initialize board with your name, opponent's game, game colors, reset scores
+// If your opponent has not joined yet, display message that you are waiting for your opponent
 socket.on('player', (data) => {
     console.log('Socket: player');
     username = data.username;
@@ -274,6 +280,8 @@ socket.on('player', (data) => {
     }
 });
 
+// Message from server that both parties have joined and we can start the game
+// Initialize board, reset counter on hints
 socket.on('start_game', () => {
     console.log('Socket: start game');
     messageWindow.remove();
@@ -287,11 +295,8 @@ socket.on('start_game', () => {
     }
 });
 
-socket.on('refresh', () => {
-    console.log('Socket: refresh.');
-    location.reload();
-})
-
+// We received an invitation from someone
+// Add it under 'received invitations' section
 socket.on('invitation', (data) => {
     const inviter = data.inviter;
     var str = `
@@ -307,6 +312,8 @@ socket.on('invitation', (data) => {
     receivedInvitations.insertAdjacentHTML('beforeend', str);
 })
 
+// Someone accepted an invitation
+// Remove from 'sent invitations' and add entry under 'accepted invitations'
 socket.on('invite_accepted', (data) => {
     const invitee = data.invitee;
     var str = `
@@ -334,12 +341,16 @@ socket.on('invite_accepted', (data) => {
     });
 })
 
+// Someone declined our invitation
+// Remove invitation from list of sent invitations
 socket.on('invite_declined', (data) => {
     const invitee = data.invitee;
     const game = document.querySelector(`.sentInvitations li#${invitee}`);
     game.remove();
 })
 
+// Message tells us which move our opponent just made
+// Update board
 socket.on('move', (data) => {
     const color = data.player;
     const row = data.row;
@@ -356,16 +367,18 @@ socket.on('move', (data) => {
     }
 })
 
+// Received reply from server about whether the opponent has agreed to a rematch
 socket.on('rematch_status', (data) => {
-
     if (data.sender != username) {
-        console.log('Socket:rematch_status')
+        console.log('Socket: rematch_status')
         const oppStatus = data.rematch;
         console.log(oppStatus);
         if (rematch != false) updateRematchStatus(oppStatus);
     }
 })
 
+// Message indicating that our opponent has disconnected
+// Contains a code on the nature of the disconnect
 socket.on('opp_disconnect', (data) => {
     inputActive = false;
     console.log('Socket: opp_disconnect.');
@@ -392,19 +405,33 @@ socket.on('opp_disconnect', (data) => {
                                     ----- Event Listeners -----
 **************************************************************************************************/
 
+// when the page first loads, check to see which friends
+// are online so we can update display to indicate online status
 window.addEventListener('DOMContentLoaded', () => {
     // send message to server requesting info on which friends are currently online
     socket.emit('get_online_friends', {});
 })
 
-/* ----- Buttons ----- */
+// Removes the 'rotate' class from a game piece after it has flipped
+// this resets the piece so that it can rotate again on the next turn (triggered by
+// adding 'rotate' class)
+gameBoard.addEventListener('transitionend', (event) => {
+    const target = event.target;
+    target.classList.remove('rotate');
+})
 
+/* ----------- Buttons ----------- */
+
+// test button used for debugging, usually is commented out on home.html
 if (btnTest) {
     btnTest.addEventListener('click', () => {
-        refreshDisplay();
+        const msg = 'This is a test message.';
+        messageWindow.showMessage(msg, false);
     })
 }
 
+// hint button
+// launches new web worker to calculate best move based on minimax function
 btnHint.addEventListener('click', () => {
     disableInput();
     nHints--;
@@ -438,6 +465,8 @@ btnHint.addEventListener('click', () => {
 
 })
 
+// button for sending invitations
+// Button is not present when logged in as a guest, which is the reason for the if statement
 if (btnSendInvite) {
     btnSendInvite.addEventListener('click', () => {
         // get the username
@@ -449,11 +478,13 @@ if (btnSendInvite) {
     })
 }
 
+// Begin game against computer
 btnPlayComputer.addEventListener('click', () => {
     console.log(`moves ahead: ${nMovesAhead}`);
     socket.emit('join', { 'game_mode': 'solo', 'difficulty': nMovesAhead });
 })
 
+// Listening for button clicks regarding online play/invitations
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('cancelInvite')) {
         const invitee = e.target.id;
@@ -504,10 +535,12 @@ document.addEventListener('click', (e) => {
     }
 })
 
+// Allow for pressing the enter key to send an invitation if the username text field is active
 document.addEventListener('keyup', (event) => {
     if (userInviteTextField == document.activeElement && event.key == 'Enter') btnSendInvite.click();
 })
 
+// Remove any old invitation status message when we click on the username text field
 if (userInviteTextField) {
     userInviteTextField.addEventListener('click', () => {
         console.log('input clicked.');
@@ -516,6 +549,7 @@ if (userInviteTextField) {
     })
 }
 
+// attach event listener to each square of the game board
 squares.forEach(item => {
     item.addEventListener('click', () => {
         // get the row and column
@@ -537,6 +571,7 @@ squares.forEach(item => {
     })
 })
 
+// If difficulty slider is moved, record newest position
 difficultySlider.addEventListener('input', () => {
     // get the current value
     var value = difficultySlider.value;
@@ -551,6 +586,7 @@ difficultySlider.addEventListener('input', () => {
     }
 })
 
+// check if help mode is turned on/off
 helpModeSwitch.addEventListener('click', () => {
     if (checkbox.checked) {
         helpMode = true;
@@ -565,6 +601,7 @@ helpModeSwitch.addEventListener('click', () => {
                                     ----- Functions -----
 **************************************************************************************************/
 
+// disable hints button when there is no game going on or it's not your turn
 function disableHints(disableStatus, keepNumEnabled = false) {
     console.log(`Hint button disabled: ${disableStatus}`)
     btnHint.disabled = disableStatus;
@@ -575,6 +612,29 @@ function disableHints(disableStatus, keepNumEnabled = false) {
     }
 }
 
+// display status from sending an invitation
+// E.g., was it successfully sent and if not, why?
+// User does not exist, you already sent them an invitation, etc.
+function addInviteStatus(msg, status) {
+    var str = `
+        <div class="inviteStatus ${status}">
+            <span>${msg}</span>
+            <button class="inviteStatusClose">&#10006;</button>
+        </div>`;
+
+    // remove any old invite status
+    const oldStatus = document.querySelector('.inviteStatus');
+    if (oldStatus) oldStatus.remove();
+    const sendInvitation = document.querySelector('.sendInvitation');
+    sendInvitation.insertAdjacentHTML('beforeend', str);
+    const btn = document.querySelector('.inviteStatus button');
+    btn.addEventListener('click', () => {
+        document.querySelector('.inviteStatus').remove();
+    })
+}
+
+// Update number of hints left
+// Used after a hint has been used or resetting the game board
 function updateNumHints(num) {
     console.log(`number of hints left: ${num}`);
     nHints = num;
@@ -585,6 +645,8 @@ function updateNumHints(num) {
     }
 }
 
+// Reset and update display after a game is over.
+// Clear the board, send a message to server requesting data on any games we haven't fetched already
 function refreshDisplay(clearScoreBoard = true) {
     clearBoard(clearScoreBoard);
     setInputs(false);
@@ -597,11 +659,13 @@ function refreshDisplay(clearScoreBoard = true) {
     socket.emit('update_record', { 'date': date, 'time': time });
 }
 
+// update the record being displayed
 function updateRecord(record) {
     const rec = document.querySelector('.recordSpan');
     rec.innerText = `${record['win']}-${record['loss']}-${record['tie']}`;
 }
 
+// update game log with a new game result
 function updateGameLog(game) {
     const log = document.querySelector('.gamelog-table tbody');
     var str = `
@@ -623,8 +687,9 @@ function updateGameLog(game) {
 
 }
 
+// toggle the enable/disable of buttons for accepting invitations
+// used when we join another game
 // status of true means we want to disable the buttons.
-// status of true menas we want to enable them.
 function disableAcceptButtons(status) {
     document.querySelectorAll('.acceptInvite').forEach(function (element) {
         element.disabled = status;
@@ -680,6 +745,8 @@ function setInviteButtons(friend = null, status = null) {
     }
 }
 
+// Function is called when an invitation is successfully sent
+// Adds invitation under 'sent invitations' along with button to cancel invitation
 function updateSentInvitations(invitee, status) {
     var str = `
             <li class="${status}" id="${invitee}"><span>${invitee}</span>
@@ -692,13 +759,9 @@ function updateSentInvitations(invitee, status) {
     sentInvitations.insertAdjacentHTML('beforeend', str);
 }
 
-// the status input indicates whether a game is ongoing.
+// the parameter 'status' indicates whether a game is ongoing.
 // enable/disable various inputs accordingly
 function setInputs(status) {
-    // btnPlayComputer.disabled = status;
-    // difficultySlider.disabled = status;
-    // helpModeSwitch.disabled = !status;
-
     // grab all elements that should be disabled when a game is active
     document.querySelectorAll('.game-disable').forEach(function (element) {
         element.disabled = status;
@@ -721,7 +784,8 @@ function setInputs(status) {
     })
 }
 
-
+// Displays message when opponent disconnects.
+// Message displayed changes depending on 'code' parameter
 function showOppDisconnectMsg(code) {
     var msg;
     if (code == 'offline') {
@@ -744,6 +808,8 @@ function showOppDisconnectMsg(code) {
     }
 }
 
+// function is called when opponent accepts an invitation but leaves before you can join
+// This function removes the invitation from the 'accepted invitations' section
 function removeAcceptedInvite(opponent) {
     const game = document.querySelector(`.acceptedInvitations li#${opponent}`);
     if (game) {
@@ -753,12 +819,20 @@ function removeAcceptedInvite(opponent) {
     }
 }
 
+// Called when you join a game
+// Any accepted invitations should be canceled.
+// The reason is that when someone accepts an invitation, they automatically join the game
+// and are waiting for you to join. So if you have joined another game they should not be
+// be left waiting for you.
+// These other invitations are canceled server-side when you join the game; a socket message
+// goes out to your friends that you are unavailable, which will trigger those games to be canceled
 function removeAllAcceptedInvites() {
     document.querySelectorAll('.acceptedInvitations li').forEach(game => {
         game.remove();
     });
 }
 
+// Clear the board of pieces, legal move indicators
 function clearBoard(clearScoreBoard = true) {
     removePieces();
     clearAllLegalMoves();
@@ -766,11 +840,12 @@ function clearBoard(clearScoreBoard = true) {
     disableHints(true);
 }
 
+// Set scoreboard back to default state, where there is no opponent listed, no score and
+// no colors assigned
 function clearScoreboard() {
     var playerColor = document.querySelector('#colorSelf');
     var opponentColor = document.querySelector('#colorOpp');
     var opponentName = document.querySelector('.opponentName');
-    // opponentColor.classList.remove('unassigned');
     playerColor.classList.remove('white', 'black');
     opponentColor.classList.remove('white', 'black');
     opponentName.innerText = '- -';
@@ -778,6 +853,7 @@ function clearScoreboard() {
     document.querySelector('.opponentScore').innerText = '-';
 }
 
+// initializes board with beginning pieces at the start of a game
 function initBoard() {
 
     var whitePieces, blackPieces;
@@ -805,16 +881,11 @@ function initBoard() {
     }
 
     turn = 'black';
-    turnTemp = 'black';
     inputActive = true;
     gameOver = false;
     gameActive = true;
     helpMode = false;
     checkbox.checked = false;
-    whiteRemainingPieces = 32;
-    blackRemainingPieces = 32;
-    whiteScore = 0;
-    blackScore = 0;
     turnIndicator.classList.remove('white');
     turnIndicator.classList.add('black');
     turnIndicator.style.transitionDelay = '0s';
@@ -834,8 +905,6 @@ function initBoard() {
         piece.style.backgroundColor = 'white';
         square.appendChild(piece);
         gameValues[row][col] = 'white';
-        whiteRemainingPieces--;
-        whiteScore++;
     }
 
     for (let black of blackPieces) {
@@ -847,11 +916,12 @@ function initBoard() {
         piece.style.backgroundColor = 'black';
         square.appendChild(piece);
         gameValues[row][col] = 'black';
-        blackRemainingPieces--;
-        blackScore++;
     }
 }
 
+// Adds a game piece to the given (row, col) location
+// updates matrix keeping track of state of game board
+// Calls functions to begin flipping animation, update scoreboard and change the turn
 function move(row, col, moves = null) {
     clearAllLegalMoves();
     if (!moves) moves = ab.returnMoveArray(row, col, gameValues, turn);
@@ -863,11 +933,12 @@ function move(row, col, moves = null) {
     square.appendChild(piece);
     gameValues[row][col] = turn;
     var delay = flipPieces(row, col, moves);
-    turnTemp = turn;
     updateScore();
     changeTurn(delay);
 }
 
+// updates the scoreboard
+// called after every move
 function updateScore() {
     var score = ab.getScore(gameValues);
     if (myColor == 'white') {
@@ -882,6 +953,7 @@ function updateScore() {
     console.log(`Updated score: white ${playerScore}, black ${oppScore}`);
 }
 
+// Called when help mode is turned on to show all the squares where a game piece can be placed
 function showAllLegalMoves() {
     for (var row = 0; row < 8; row++) {
         for (var col = 0; col < 8; col++) {
@@ -897,6 +969,7 @@ function showAllLegalMoves() {
     }
 }
 
+// Adds indicator of the suggested move when a hint is used
 function showHint(row, col) {
     const square = document.querySelector(`#R${row}C${col}`);
     var legalMoveFlag = false;
@@ -922,6 +995,7 @@ function showHint(row, col) {
     }, 1000);
 }
 
+// This clears the grey circles that indicate legal moves available when help mode is turned on
 function clearAllLegalMoves() {
     const markers = document.querySelectorAll('.legalMove');
     if (markers.length) {
@@ -931,6 +1005,8 @@ function clearAllLegalMoves() {
     }
 }
 
+// Function to handle the flipping animation of the pieces
+// assigns proper delay value to each piece so the animations are timed properly
 function flipPieces(row, col, moves) {
     var delay = 0;
     for (let move of moves) {
@@ -963,6 +1039,7 @@ function flipPieces(row, col, moves) {
     return delay;
 }
 
+// function for retrieving coordinates of square (row, column)
 function getSquareCoord(square) {
     const name = square.id;
     const row = parseInt(name.slice(1, 2));
@@ -971,6 +1048,9 @@ function getSquareCoord(square) {
     return ([row, col]);
 }
 
+// Called when turns are changing
+// Enable/disble inputs
+// Also checks if the game is over
 function changeTurn(delay = 0) {
     console.log(delay);
     var extra_delay = 0;
@@ -995,7 +1075,6 @@ function changeTurn(delay = 0) {
         }
     }
 
-    // setTimeout(removeRotateClass, delay * 0.5 * 1000 + 1 + extra_delay);
     setTimeout(enableInput, delay * 0.5 * 1000 + 500 + extra_delay);
     if (turn == myColor) {
         setTimeout(() => {
@@ -1012,12 +1091,11 @@ function changeTurn(delay = 0) {
             setTimeout(() => {
                 socket.emit('computer_move');
             }, delay * 0.5 * 1000 + 500 + extra_delay);
-        } else if (autoplay) {
-            socket.emit('autoplay');
         }
     }
 }
 
+// launch web worker process to calculate computer's move with minimax algorithm
 function computerMove() {
     console.log("computer's move.");
 
@@ -1037,6 +1115,10 @@ function computerMove() {
     w.postMessage([nMovesAhead, turn, gameValues]);
 }
 
+// when the game is over (neither player has any available moves), this function is called
+// Calculate who won, send a message to the server updating on game result so it can be 
+// added to the database
+// Also call function to display the game over message
 function handleGameOverEvent() {
     // calculate winner
     var white = 0;
@@ -1087,6 +1169,8 @@ function handleGameOverEvent() {
 
 }
 
+// Display "game over" message, indicating result of the game.
+// Also include buttons to agree to a rematch or decline
 function displayGameOver(game_result) {
     var msg;
     switch (game_result) {
@@ -1149,24 +1233,16 @@ function displayGameOver(game_result) {
     }
 }
 
+// this fucntion is only called when a rematch is agreed to, which means we need to 
+// clear the board in a slightly different way than normal.
+// Also sends message to server to trigger the start of the game
 function resetGame() {
     // remove the message window
     messageWindow.remove();
-    refreshDisplay(false);
+    refreshDisplay(false); // 'false' input means we don't clear the names from the scoreboard
     rematch = null;
     opp_rematch = null;
-    // clearBoard();
-    // initBoard();
     socket.emit('trigger_start_game');
-}
-
-function removeRotateClass() {
-    const pieces = document.querySelectorAll('.gamePiece');
-    pieces.forEach((piece) => {
-        // void piece.offsetWidth;
-        piece.style.transitionDelay = 0;
-        piece.classList.remove('rotate');
-    })
 }
 
 function enableInput() {
@@ -1181,27 +1257,6 @@ function disableInput() {
     inputActive = false;
     body.classList.add('disableCursor');
     console.log('disable input');
-}
-
-function zeroTransitionDelay() {
-    const pieces = document.querySelectorAll('.gamePiece');
-    pieces.forEach((piece) => {
-        piece.style.transitionDelay = '0s';
-    })
-}
-
-function updateVolumeSettings() {
-    ping.volume = volume;
-    ping2.volume = volume;
-    if (volume == 0) {
-        volumeSymbol.innerHTML = '&#128263;';
-    } else if (volume < 0.33) {
-        volumeSymbol.innerHTML = '&#128264;';
-    } else if (volume < 0.66) {
-        volumeSymbol.innerHTML = '&#128265;';
-    } else {
-        volumeSymbol.innerHTML = '&#128266;';
-    }
 }
 
 function removePieces() {
@@ -1236,10 +1291,9 @@ function updateRematchStatus(oppStatus) {
     }
 }
 
-gameBoard.addEventListener('transitionend', (event) => {
-    const target = event.target;
-    target.classList.remove('rotate');
-})
+/**************************************************************************************************
+                                    ----- Old Sound/Volume Code -----
+**************************************************************************************************/
 
 // gameBoard.addEventListener('transitionstart', (event) => {
 //     const target = event.target;
@@ -1275,3 +1329,17 @@ gameBoard.addEventListener('transitionend', (event) => {
 //     }
 //     updateVolumeSettings();
 // })
+
+// function updateVolumeSettings() {
+//         ping.volume = volume;
+//         ping2.volume = volume;
+//         if (volume == 0) {
+//             volumeSymbol.innerHTML = '&#128263;';
+//         } else if (volume < 0.33) {
+//             volumeSymbol.innerHTML = '&#128264;';
+//         } else if (volume < 0.66) {
+//             volumeSymbol.innerHTML = '&#128265;';
+//         } else {
+//             volumeSymbol.innerHTML = '&#128266;';
+//         }
+//     }
