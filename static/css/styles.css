@@ -203,8 +203,13 @@ h3.invitations-header {
     height: 100%;
 }
 
+.gameBoard tbody {
+    height: 100%;
+}
+
 .gameBoard tr {
     width: 100%;
+    height: 12.5%;
 }
 
 .square {
