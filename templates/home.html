@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/styles.css?v=1.0.0" />
+    <link rel="stylesheet" href="/static/css/queries.css?v=1.0.0" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"
+        integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
+        crossorigin="anonymous"></script>
+    <title>Othello</title>
+    <link rel="shortcut icon" type="image/jpg" href="/static/images/othello_icon.jpg" />
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="game-container">
+            <div class="game">
+                <div class="gameBoard-container">
+                    <table class="gameBoard">
+                        {% for i in range(8) %}
+                        <tr>
+                            {% for j in range(8) %}
+                            <td class="square" id="R{{i}}C{{j}}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                <div class="gameControl">
+                    <div class="turnDisplay">
+                        <span class="turnLabel">Player Turn</span>
+                        <span class="turnIndicator black"></span>
+                    </div>
+                    <div class="hint-container">
+                        <button class="btnHint button-component">Hint</button>
+                        <span class="nHints-container">
+                            &#215;<span class="nHints">&infin;</span>
+                        </span>
+                    </div>
+                    <!-- <button class="btnTest button-component">Test</button> -->
+                    <div class="helpMode game-enable disabled">
+                        <span class="helpModeLabel">Show Moves</span>
+                        <label class="helpModeSwitch">
+                            <input type="checkbox" id="helpModeCheckbox">
+                            <span class="helpModeSlider round game-enable disabled"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="playersSection">
+                    <div class="playerCard">
+                        <div class="playerName">
+                            {% if username %}
+                            {{username}}
+                            {% else %}
+                            Guest
+                            {% endif %}
+                        </div>
+                        <div class="scoreDiv">
+                            <span class="playerColor" id="colorSelf"></span>
+                            <span class="playerScore">-</span>
+                        </div>
+                    </div>
+                    <div class="Vs">VS</div>
+                    <div class="oppCard">
+                        <div class="opponentName">- -
+                        </div>
+                        <div class="scoreDiv">
+                            <span class="playerColor" id="colorOpp"></span>
+                            <span class="opponentScore">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header">
+            <div class="welcomeMsg">
+                {% if username %}
+                <p>Welcome, {{username}}
+                </p>
+                <!-- <a class="logIn" href="/logout"><span class="logInOutText">logout</span></a> -->
+                {% else %}
+                <p>Welcome, Guest
+                </p>
+                <!-- <div class="logOut">
+                    <a class="" href="/login"><span>login</span></a>
+                    <span class="">&bull;</span>
+                    <a class="" href="/register"><span>register</span></a>
+                </div> -->
+                {% endif %}
+            </div>
+
+            {% if username %}
+            <div class="record">
+                <span class="recordLabel">Record: </span>
+                <span class="recordSpan"> {{record['win']}}-{{record['loss']}}-{{record['tie']}}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="play">
+            <div class="play-computer">
+                <button class="button-component game-disable btnPlayComputer">Play Computer</button>
+                <div class="difficultySelect game-disable">
+                    <div class="difficultyDisplay">
+                        <span>Difficulty: </span>
+                        <span class="difficultyNumber">5</span>
+                    </div>
+                    <input type="range" min="1" max="10" step="1" value="5" class="difficultySlider game-disable">
+                </div>
+            </div>
+
+            {% if username %}
+
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <ul class=flashes>
+                {% for category, message in messages %}
+                <li class="flash {{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+            {% endif %}
+        </div>
+
+
+        {% if username %}
+        <div class="gamelog">
+            <p>Game Log</p>
+            <div class="gamelog-container">
+                <table class="gamelog-table">
+                    <thead>
+                        <tr>
+                            <th class="date">Date</th>
+                            <th class="time">Time</th>
+                            <th class="opponent">Opponent</th>
+                            <th class="outcome">Outcome</th>
+                            <th class="my_score">My Score</th>
+                            <th class="opp_score">Opp. Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if game_log|length %}
+                        {% for game in game_log %}
+                        <tr>
+                            <td class="gamelog-date">{{ game['date'] }}</td>
+                            <td class="gamelog-time">{{ game['time'] }}</td>
+                            <td>{{ game['opponent'] }}</td>
+                            <td>{{ game['outcome'] }}</td>
+                            <td>{{ game['my_score'] }}</td>
+                            <td>{{ game['opp_score'] }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr class="placeholder">
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td>-----</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="side-ribbon">
+            <div class="social-container">
+                <h3 class="invitations-header">Online Play</h3>
+                {% if username %}
+                <div class="logInOut">
+                    <a href="/logout"><span class="logInOutText">logout</span></a>
+                </div>
+                <div class="sendInvitation">
+                    <h4 class="sendInviteHeader">Send Invitation</h4>
+                    <input type="text" class="vs-game-disable" id="userInvite" name="userInvite" placeholder="username">
+                    <button class="button-component vs-game-disable btnSendInvite">Send</button>
+                </div>
+
+                <div class="sentInvitations">
+                    <h4>Sent</h4>
+                    <ul>
+                        {% if sent_invitations %}
+                        {% for invitee in sent_invitations %}
+                        <li id="{{ invitee }}"><span>{{ invitee }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 cancelInvite" id="{{ invitee }}">Cancel</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="receivedInvitations">
+                    <h4>Received</h4>
+                    <ul>
+                        {% if received_invitations %}
+                        {% for inviter in received_invitations %}
+                        <li id="{{ inviter }}"><span>{{ inviter }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 game-disable offline-disable disabled acceptInvite"
+                                    id="{{ inviter }}" disabled>&check;</button>
+                                <button class="button-component-v2 declineInvite" id="{{ inviter }}">&#10006;</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="acceptedInvitations">
+                    <h4>Accepted</h4>
+                    <ul>
+                        {% if accepted_invitations %}
+                        {% for invitee, room in accepted_invitations.items() %}
+                        <li id="{{ invitee }}"><span>{{ invitee }}</span>
+                            <div class="accept-decline-buttons">
+                                <button class="button-component-v2 game-disable joinGame"
+                                    id="{{ invitee }}">&check;</button>
+                                <button class="button-component-v2 cancelGame" id="{{ invitee }}">&#10006;</button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% else %}
+                <div class="logInOut">
+                    <a class="" href="/login"><span class="logInOutText">login</span></a>
+                    <span class="">&bull;</span>
+                    <a class="" href="/register"><span class="logInOutText">register</span></a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="links">
+                <h4>Links</h4>
+                <a href="https://github.com/cspoppe/Othello">Code - Github</a>
+                <a href="https://www.cspoppeprofile.com/">Sudoku by Craig</a>
+                <a href="https://www.linkedin.com/in/craig-poppe-030b4616/">LinkedIn Profile</a>
+            </div>
+        </div>
+
+    </div>
+    <script type="module" src="/static/home.js?v=1.0.0"></script>
+</body>
+
+</html>

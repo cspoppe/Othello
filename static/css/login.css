@@ -1,0 +1,133 @@
+html {
+    font-family: 'Helvetica';
+    color: var(--font-color);
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+body {
+    /* background-color: rgb(73, 73, 73); */
+    background-color: #4C956C;
+}
+
+:root {
+    --font-color: #FEFEE3;
+}
+
+.base-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    margin: 0 auto;
+}
+
+.login-header {
+    display: flex;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 1rem auto;
+}
+
+.login__window {
+    box-sizing: border-box;
+    width: 15.75rem;
+    margin: 0 auto;
+    border: none;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: #2C6E49;
+}
+
+.login__form {
+    display: flex;
+    flex-direction: column;
+
+}
+
+.input-component {
+    margin-bottom: 1rem;
+    display: flex;
+}
+
+.button-component {
+    height: 3.5rem;
+    font-size: 1.5rem;
+    color: var(--font-color);
+    border: none;
+    background-color: #A26769;
+    border-radius: 0.7rem;
+}
+
+.button-component:hover {
+    cursor: pointer;
+    background-color: #be7a7c;
+}
+
+.button-component:active {
+    background-color: #da8a8d;
+}
+
+.login-input {
+    padding: 0.6rem 0.8rem;
+    width: 100%;
+    font-size: 1rem;
+    background-color: #4C956C;
+    /* border: solid 1px black; */
+    border: none;
+    color: var(--font-color);
+    border-radius: 0.2rem;
+}
+
+.register-component,
+.login-component {
+    display: flex;
+    justify-content: center;
+    /* align */
+    font-size: 1rem;
+    padding: 1rem 0.5rem;
+    /* background-color: rgb(4, 73, 4); */
+
+}
+
+.register-tag,
+.login-tag {
+    margin-right: 0.5rem;
+}
+
+.register-component a,
+.login-component a {
+    text-decoration: none;
+    color: blue;
+    font-weight: bold;
+}
+
+::placeholder {
+    color: rgb(75, 75, 75);
+    font-style: italic;
+}
+
+.flashes {
+    display: flex;
+    justify-content: center;
+}
+
+.flash {
+    margin-top: 10px;
+}
+
+.flash.error {
+    color: orangered;
+}
+
+.flash.info {
+    color: blue;
+}
+
+.flash.success {
+    color: springgreen;
+}
