@@ -39,7 +39,7 @@ var turn = 'black'; // keeps track of whose turn it is
 var inputActive = true; // inputs are deactivated when it's not your turn
 var gameOver = false; // game over flag
 var gameActive = false; // indicates if a game is active or not
-var quickGame = false; // flag used to set up an easy-to-win game for debugging purposes
+var debugGame = false; // flag used to set up an easy-to-win game for debugging purposes
 
 // initialize matrix representing state of game board
 var gameValues = new Array(8);
@@ -112,8 +112,7 @@ const messageWindow = {
                 label: 'Close',
                 func: function () {
                     console.log('Message window closed.');
-                    document.querySelector('.message__window').remove();
-                    document.querySelector('.gameBoard').style.opacity = 1;
+                    messageWindow.removeMsg();
 
                     /*
                     if you weren't playing a game against the computer, send out message to invitees
@@ -143,7 +142,9 @@ const messageWindow = {
         if (expire_time) {
             // set window to expire after given amount of time.
             setTimeout(() => {
-                document.querySelector('.message__window').remove();
+                messageWindow.removeMsg();
+                // set opacity of board back to normal
+                // document.querySelector('.gameBoard').style.opacity = 1;
             }, expire_time);
         }
 
@@ -151,7 +152,7 @@ const messageWindow = {
         document.querySelector('.gameBoard').style.opacity = 0.4;
     },
 
-    remove() {
+    removeMsg() {
         // Check if a message window exists before trying to remove it.
         // This allows us to call the remove function just to make sure any messages are cleared
         // without having to know if a message is showing.
@@ -284,7 +285,7 @@ socket.on('player', (data) => {
 // Initialize board, reset counter on hints
 socket.on('start_game', () => {
     console.log('Socket: start game');
-    messageWindow.remove();
+    messageWindow.removeMsg();
     (opponent == 'Computer') ? updateNumHints(Infinity) : updateNumHints(3);
     initBoard();
     setInputs(true);
@@ -447,7 +448,7 @@ btnHint.addEventListener('click', () => {
     w.addEventListener('message', function (e) {
         const m = e.data;
 
-        messageWindow.remove();
+        messageWindow.removeMsg();
         console.log(`Suggested move: ${m[0]}, ${m[1]}`)
         showHint(m[0], m[1]);
 
@@ -803,7 +804,7 @@ function showOppDisconnectMsg(code) {
 
     if (code != 'cancel_after_accept') {
         // remove any message currently showing
-        messageWindow.remove();
+        messageWindow.removeMsg();
         messageWindow.showMessage(msg, false, 'refresh');
     }
 }
@@ -858,15 +859,15 @@ function initBoard() {
 
     var whitePieces, blackPieces;
 
-    if (quickGame) {
+    if (debugGame) {
         whitePieces = [
-            [3, 3]
+            [6, 6],
+            [6, 7]
         ];
 
         blackPieces = [
-            [3, 4],
-            [4, 3],
-            [4, 4]
+            [7, 6],
+            [7, 7]
         ];
     } else {
         whitePieces = [
@@ -1104,7 +1105,7 @@ function computerMove() {
     w.addEventListener('message', function (e) {
         const m = e.data;
 
-        messageWindow.remove();
+        messageWindow.removeMsg();
         console.log(`Suggested move: ${m[0]}, ${m[1]}`)
         move(m[0], m[1]);
 
@@ -1190,7 +1191,7 @@ function displayGameOver(game_result) {
         func: function () {
             rematch = true;
             // remove the current message window
-            messageWindow.remove();
+            messageWindow.removeMsg();
             if (opp_rematch) {
                 // I have already received a message that my opponent wants a rematch, so I can immediatley reset the game
 
@@ -1213,7 +1214,7 @@ function displayGameOver(game_result) {
         label: 'Leave',
         func: function () {
             // remove the current message window
-            messageWindow.remove();
+            messageWindow.removeMsg();
 
             // display message confirming to user that they declined a rematch
             const msg = 'You declined a rematch.';
@@ -1238,7 +1239,7 @@ function displayGameOver(game_result) {
 // Also sends message to server to trigger the start of the game
 function resetGame() {
     // remove the message window
-    messageWindow.remove();
+    messageWindow.removeMsg();
     refreshDisplay(false); // 'false' input means we don't clear the names from the scoreboard
     rematch = null;
     opp_rematch = null;
@@ -1271,7 +1272,7 @@ function updateRematchStatus(oppStatus) {
 
     // opponent has declined a rematch
     if (!oppStatus) {
-        messageWindow.remove();
+        messageWindow.removeMsg();
         const msg = 'Your opponent declined a rematch.';
         // tell server to clear your opponent's name and sid from your session
         socket.emit('clear_opp_data');
@@ -1279,7 +1280,7 @@ function updateRematchStatus(oppStatus) {
     } else {
         // if I have already also said yes to a rematch, reset them
         if (rematch) {
-            messageWindow.remove();
+            messageWindow.removeMsg();
             const msg = 'Rematch is on!';
             messageWindow.showMessage(msg, false, 'none');
             setTimeout(resetGame, 2000);
